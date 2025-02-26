@@ -1,0 +1,122 @@
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: "rise_models" # replace with the name of the chain
+version: "1.0.0"
+config-version: 2
+
+# This setting configures which "profile" dbt uses for this project.
+profile: "rise" # replace with the name of the chain
+
+# These configurations specify where dbt should look for different types of files.
+# The `source-paths` config, for example, states that models in this project can be
+# found in the "models/" directory. You probably won't need to change these!
+model-paths: ["models"] 
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+seed-paths: ["data"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+docs-paths: ["dbt_packages/fsc_evm/doc_descriptions", "models/doc_descriptions", "models"]
+
+target-path: "target" # directory which will store compiled SQL files
+clean-targets: # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_modules"
+  - "dbt_packages"
+
+tests:
+  rise_models: # replace with the name of the chain
+    +store_failures: true # all tests
+
+on-run-start:
+  - "{{ fsc_evm.create_sps() }}"
+  - "{{ fsc_evm.create_udfs() }}"
+
+on-run-end:
+  - '{{ fsc_evm.apply_meta_as_tags(results) }}'
+
+dispatch:
+  - macro_namespace: dbt
+    search_order:
+      - rise-models
+      - dbt_snowflake_query_tags
+      - dbt
+
+query-comment:
+  comment: '{{ dbt_snowflake_query_tags.get_query_comment(node) }}'
+  append: true # Snowflake removes prefixed comments.
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+models:
+  rise_models: # replace with the name of the chain
+    +copy_grants: true
+    +persist_docs:
+      relation: true
+      columns: true
+    +on_schema_change: "append_new_columns"
+  livequery_models:
+    +enabled: true  # Keep livequery models enabled since you need them
+    +materialized: ephemeral
+  fsc_evm:
+    +enabled: false # keep fsc_evm package disabled
+    +copy_grants: true
+    +persist_docs:
+      relation: true
+      columns: true
+    +on_schema_change: "append_new_columns"
+
+vars:
+  "dbt_date:time_zone": GMT
+  STREAMLINE_INVOKE_STREAMS: False
+  STREAMLINE_USE_DEV_FOR_EXTERNAL_TABLES: False
+  UPDATE_UDFS_AND_SPS: False
+  UPDATE_SNOWFLAKE_TAGS: True
+  OBSERV_FULL_TEST: False
+  WAIT: 0
+  HEAL_MODEL: False
+  HEAL_MODELS: []
+  START_GHA_TASKS: False
+
+#### STREAMLINE 2.0 BEGIN ####
+
+  API_INTEGRATION: '{{ var("config")[target.name]["API_INTEGRATION"] if var("config")[target.name] else var("config")["dev"]["API_INTEGRATION"] }}'
+  EXTERNAL_FUNCTION_URI: '{{ var("config")[target.name]["EXTERNAL_FUNCTION_URI"] if var("config")[target.name] else var("config")["dev"]["EXTERNAL_FUNCTION_URI"] }}'
+  ROLES: |
+    ["INTERNAL_DEV"]
+
+  config:
+  # The keys correspond to dbt profiles and are case sensitive
+    dev:
+      API_INTEGRATION: AWS_RISE_API_STG_V2
+      EXTERNAL_FUNCTION_URI: 5o9bonenwi.execute-api.us-east-1.amazonaws.com/stg/
+      ROLES:
+        - AWS_LAMBDA_RISE_API # replace with the name of the chain
+        - INTERNAL_DEV
+
+    # prod:
+    #   API_INTEGRATION: AWS_RISE_API_PROD_V2
+    #   EXTERNAL_FUNCTION_URI: <insert_uri>.execute-api.us-east-1.amazonaws.com/prod/
+    #   ROLES:
+    #     - AWS_LAMBDA_RISE_API # replace with the name of the chain
+    #     - INTERNAL_DEV
+    #     - DBT_CLOUD_RISE # replace with the name of the chain
+
+#### STREAMLINE 2.0 END ####
+
+#### FSC_EVM BEGIN ####
+
+  ### GLOBAL VARIABLES BEGIN ###
+  
+  ## REQUIRED
+  GLOBAL_PROD_DB_NAME: "rise"
+  GLOBAL_NODE_SECRET_PATH: "insert_vault_path"
+  GLOBAL_BLOCKS_PER_HOUR: 3600
+
+  ### GLOBAL VARIABLES END ###
+
+# Please visit https://github.com/FlipsideCrypto/fsc-evm/wiki for more information on required and optional variables
+
+#### FSC_EVM END ####
