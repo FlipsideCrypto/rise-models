@@ -42,4 +42,4 @@ jobs:
           
       - name: Run Main Models
         run: |
-          dbt run -m "rise_models,tag:silver_testnet" "rise_models,tag:gold_testnet"
+          dbt run -m "rise_models,tag:silver_testnet" "rise_models,tag:gold_testnet" "rise_models,tag:bronze_testnet"
