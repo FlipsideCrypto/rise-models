@@ -66,18 +66,18 @@ WHERE
                 utils.udf_hex_to_int(
                     transaction_json :maxFeePerGas :: STRING
                 )
-                    ) / pow(
-                        10,
-                        9
-            ) AS max_fee_per_gas,
+            ) / pow(
+                10,
+                9
+            ) AS max_fee_per_gas, --may not be present in transaction_json
             TRY_TO_NUMBER(
                 utils.udf_hex_to_int(
                     transaction_json :maxPriorityFeePerGas :: STRING
                 )
-                    ) / pow(
-                        10,
-                        9
-            ) AS max_priority_fee_per_gas,
+            ) / pow(
+                10,
+                9
+            ) AS max_priority_fee_per_gas, --may not be present in transaction_json
             utils.udf_hex_to_int(
                 transaction_json :value :: STRING
             ) AS value_precise_raw,
@@ -86,7 +86,21 @@ WHERE
                 18
             ) AS value_precise,
             value_precise :: FLOAT AS VALUE,
-            utils.udf_hex_to_int(transaction_json :yParity :: STRING):: bigint AS y_parity,
+            utils.udf_hex_to_int(
+                transaction_json :yParity :: STRING
+            ) :: bigint AS y_parity,
+            utils.udf_hex_to_int(
+                transaction_json :mint :: STRING
+            ) AS mint_precise_raw,
+            utils.udf_decimal_adjust(
+                mint_precise_raw,
+                18
+            ) AS mint_precise,
+            mint_precise :: FLOAT AS mint,
+            utils.udf_hex_to_int(
+                transaction_json :depositReceiptVersion :: STRING
+            ) :: bigint AS deposit_receipt_version,
+            transaction_json :sourceHash :: STRING AS source_hash,
             transaction_json :accessList AS access_list
         FROM
             base
@@ -107,6 +121,38 @@ WHERE
             txs.max_priority_fee_per_gas,
             txs.y_parity,
             txs.access_list,
+            utils.udf_hex_to_int(
+                r.receipts_json :l1BaseFeeScalar :: STRING
+            ) :: bigint AS l1_base_fee_scalar,
+            utils.udf_hex_to_int(
+                r.receipts_json :l1BlobBaseFee :: STRING
+            ) :: bigint AS l1_blob_base_fee,
+            utils.udf_hex_to_int(
+                r.receipts_json :l1BlobBaseFeeScalar :: STRING
+            ) :: bigint AS l1_blob_base_fee_scalar,
+            utils.udf_hex_to_int(
+                r.receipts_json :l1Fee :: STRING
+            ) AS l1_fee_precise_raw,
+            COALESCE(
+                l1_fee_precise_raw :: FLOAT,
+                0
+            ) AS l1_fee,
+            utils.udf_decimal_adjust(
+                l1_fee_precise_raw,
+                18
+            ) AS l1_fee_precise,
+            COALESCE(
+                utils.udf_hex_to_int(
+                    r.receipts_json :l1GasUsed :: STRING
+                ) :: FLOAT,
+                0
+            ) AS l1_gas_used,
+            COALESCE(
+                utils.udf_hex_to_int(
+                    r.receipts_json :l1GasPrice :: STRING
+                ) :: FLOAT,
+                0
+            ) AS l1_gas_price,
             utils.udf_decimal_adjust(
                 txs.gas_price * utils.udf_hex_to_int(
                     r.receipts_json :gasUsed :: STRING
@@ -142,7 +188,15 @@ WHERE
             ) :: bigint AS effective_gas_price,
             txs.r,
             txs.s,
-            txs.v
+            txs.v,
+            txs.source_hash,
+            utils.udf_hex_to_int(
+                r.receipts_json :depositNonce :: STRING
+            ) :: bigint AS deposit_nonce,
+            txs.deposit_receipt_version,
+            txs.mint,
+            txs.mint_precise_raw,
+            txs.mint_precise
         FROM
             transactions_fields txs
             LEFT JOIN {{ ref('testnet__fact_blocks') }}
@@ -188,10 +242,42 @@ missing_data AS (
         t.max_priority_fee_per_gas,
         t.y_parity,
         t.access_list,
+        utils.udf_hex_to_int(
+            r.receipts_json :l1BaseFeeScalar :: STRING
+        ) :: bigint AS l1_base_fee_scalar_heal,
+        utils.udf_hex_to_int(
+            r.receipts_json :l1BlobBaseFee :: STRING
+        ) :: bigint AS l1_blob_base_fee_heal,
+        utils.udf_hex_to_int(
+            r.receipts_json :l1BlobBaseFeeScalar :: STRING
+        ) :: bigint AS l1_blob_base_fee_scalar_heal,
+        utils.udf_hex_to_int(
+            r.receipts_json :l1Fee :: STRING
+        ) AS l1_fee_precise_raw_heal,
+        COALESCE(
+            l1_fee_precise_raw_heal :: FLOAT,
+            0
+        ) AS l1_fee_heal,
+        utils.udf_decimal_adjust(
+            l1_fee_precise_raw_heal,
+            18
+        ) AS l1_fee_precise_heal,
+        COALESCE(
+            utils.udf_hex_to_int(
+                r.receipts_json :l1GasUsed :: STRING
+            ) :: FLOAT,
+            0
+        ) AS l1_gas_used_heal,
+        COALESCE(
+            utils.udf_hex_to_int(
+                r.receipts_json :l1GasPrice :: STRING
+            ) :: FLOAT,
+            0
+        ) AS l1_gas_price_heal,
         utils.udf_decimal_adjust(
             t.gas_price * utils.udf_hex_to_int(
                 r.receipts_json :gasUsed :: STRING
-            ) :: bigint, 
+            ) :: bigint,
             9
         ) AS tx_fee_precise_heal,
         COALESCE(
@@ -220,7 +306,15 @@ missing_data AS (
         ) :: bigint AS effective_gas_price_heal,
         t.r,
         t.s,
-        t.v
+        t.v,
+        t.source_hash,
+        utils.udf_hex_to_int(
+            r.receipts_json :depositNonce :: STRING
+        ) :: bigint AS deposit_nonce_heal,
+        t.deposit_receipt_version,
+        t.mint,
+        t.mint_precise_raw,
+        t.mint_precise
     FROM
         {{ this }}
         t
@@ -251,8 +345,16 @@ all_transactions AS (
         max_priority_fee_per_gas,
         y_parity,
         access_list,
+        l1_base_fee_scalar,
+        l1_blob_base_fee,
+        l1_blob_base_fee_scalar,
+        l1_fee_precise_raw,
+        l1_fee,
+        l1_fee_precise,
         tx_fee,
         tx_fee_precise,
+        l1_gas_used,
+        l1_gas_price,
         tx_succeeded,
         tx_type,
         nonce,
@@ -265,7 +367,13 @@ all_transactions AS (
         effective_gas_price,
         r,
         s,
-        v
+        v,
+        source_hash,
+        deposit_nonce,
+        deposit_receipt_version,
+        mint,
+        mint_precise_raw,
+        mint_precise
     FROM
         new_transactions
 
@@ -285,8 +393,16 @@ SELECT
     max_priority_fee_per_gas,
     y_parity,
     access_list,
+    l1_base_fee_scalar_heal AS l1_base_fee_scalar,
+    l1_blob_base_fee_heal AS l1_blob_base_fee,
+    l1_blob_base_fee_scalar_heal AS l1_blob_base_fee_scalar,
+    l1_fee_precise_raw_heal AS l1_fee_precise_raw,
+    l1_fee_heal AS l1_fee,
+    l1_fee_precise_heal AS l1_fee_precise,
     tx_fee_heal AS tx_fee,
     tx_fee_precise_heal AS tx_fee_precise,
+    l1_gas_used_heal AS l1_gas_used,
+    l1_gas_price_heal AS l1_gas_price,
     tx_succeeded_heal AS tx_succeeded,
     tx_type,
     nonce,
@@ -299,7 +415,13 @@ SELECT
     effective_gas_price_heal AS effective_gas_price,
     r,
     s,
-    v
+    v,
+    source_hash,
+    deposit_nonce_heal AS deposit_nonce,
+    deposit_receipt_version,
+    mint,
+    mint_precise_raw,
+    mint_precise
 FROM
     missing_data
 {% endif %}
@@ -311,6 +433,9 @@ SELECT
     from_address,
     to_address,
     origin_function_signature,
+    mint,
+    mint_precise_raw,
+    mint_precise,
     VALUE,
     value_precise_raw,
     value_precise,
@@ -328,11 +453,22 @@ SELECT
     effective_gas_price,
     max_fee_per_gas,
     max_priority_fee_per_gas,
+    l1_fee,
+    l1_fee_precise_raw,
+    l1_fee_precise,
+    l1_gas_used,
+    l1_gas_price,
+    l1_base_fee_scalar,
+    l1_blob_base_fee,
+    l1_blob_base_fee_scalar,
     y_parity,
     access_list,
     r,
     s,
     v,
+    deposit_nonce,
+    deposit_receipt_version,
+    source_hash,
     {{ dbt_utils.generate_surrogate_key(['tx_hash']) }} AS fact_transactions_id,
     SYSDATE() AS inserted_timestamp,
     SYSDATE() AS modified_timestamp

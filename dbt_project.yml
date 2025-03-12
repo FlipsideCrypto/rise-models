@@ -96,13 +96,13 @@ vars:
         - AWS_LAMBDA_RISE_API # replace with the name of the chain
         - INTERNAL_DEV
 
-    # prod:
-    #   API_INTEGRATION: AWS_RISE_API_PROD_V2
-    #   EXTERNAL_FUNCTION_URI: <insert_uri>.execute-api.us-east-1.amazonaws.com/prod/
-    #   ROLES:
-    #     - AWS_LAMBDA_RISE_API # replace with the name of the chain
-    #     - INTERNAL_DEV
-    #     - DBT_CLOUD_RISE # replace with the name of the chain
+    prod:
+      API_INTEGRATION: AWS_RISE_API_PROD_V2
+      EXTERNAL_FUNCTION_URI: 5543m1l4b0.execute-api.us-east-1.amazonaws.com/prod/
+      ROLES:
+        - AWS_LAMBDA_RISE_API # replace with the name of the chain
+        - INTERNAL_DEV
+        - DBT_CLOUD_RISE # replace with the name of the chain
 
 #### STREAMLINE 2.0 END ####
 
@@ -112,7 +112,7 @@ vars:
   
   ## REQUIRED
   GLOBAL_PROD_DB_NAME: "rise"
-  GLOBAL_NODE_SECRET_PATH: "insert_vault_path"
+  GLOBAL_NODE_SECRET_PATH: "Vault/prod/rise/nirvana/testnet"
   GLOBAL_BLOCKS_PER_HOUR: 3600
 
   ### GLOBAL VARIABLES END ###
