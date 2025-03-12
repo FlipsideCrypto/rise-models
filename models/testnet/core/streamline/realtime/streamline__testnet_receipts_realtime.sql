@@ -25,7 +25,6 @@ WITH to_do AS (
 ready_blocks AS (
     SELECT block_number
     FROM to_do
-    WHERE block_number >= 6070418
 )
 SELECT
     block_number,
