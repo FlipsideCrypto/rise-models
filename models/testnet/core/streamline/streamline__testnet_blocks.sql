@@ -4,7 +4,7 @@
 ) }}
 
 select * 
-from (
+FROM (
 SELECT
     _id,
     (
@@ -25,4 +25,4 @@ WHERE
             {{ ref("streamline__get_testnet_chainhead") }}
     )
 )
-where block_number > 0
+WHERE block_number >= 6070418
