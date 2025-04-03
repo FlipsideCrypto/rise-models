@@ -16,8 +16,8 @@ jobs:
       environment: workflow_temp_test
       command_name: Run Bronze Models
       command: |
-        dbt run -m "fsc_evm,tag:bronze_core"
+        dbt run -m "$PROJECT_NAME,tag:bronze_core"
       command_name_2: Run Bronze Models 2
       command_2: |
-        dbt run -m "fsc_evm,tag:bronze_core"
+        dbt run -m "$PROJECT_NAME,tag:bronze_core"
     secrets: inherit
