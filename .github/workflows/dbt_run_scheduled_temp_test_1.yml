@@ -1,0 +1,20 @@
+name: dbt_run_scheduled_main_1
+run-name: dbt_run_scheduled_main_1
+
+on:
+  workflow_dispatch:
+    branches:
+      - "main"
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  called_workflow_template:
+    uses: FlipsideCrypto/evm-models-template/.github/workflows/dbt_run_template.yml@main
+    with:
+      environment: workflow_temp_test
+      command_name: Run Bronze Models
+      command: |
+        dbt run -m "fsc_evm,tag:bronze_core"
+    secrets: inherit
