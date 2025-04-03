@@ -13,6 +13,7 @@ jobs:
   called_workflow_template:
     uses: FlipsideCrypto/evm-models-template/.github/workflows/dbt_run_template.yml@main
     with:
+      environment: workflow_temp_test
       command_name: Run Main Models
       command: |
         dbt run -m "fsc_evm,tag:silver_core" "fsc_evm,tag:gold_core" "fsc_evm,tag:silver_prices" "fsc_evm,tag:gold_prices" "fsc_evm,tag:silver_labels" "fsc_evm,tag:gold_labels"
