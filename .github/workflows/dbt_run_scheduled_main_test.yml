@@ -4,7 +4,7 @@ run-name: dbt_run_scheduled_main
 on:
   workflow_dispatch:
     branches:
-      - "main"
+      - "AN-5800/test-workflows"
 
 concurrency:
   group: ${{ github.workflow }}
