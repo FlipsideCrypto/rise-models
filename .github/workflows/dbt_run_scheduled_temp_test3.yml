@@ -1,11 +1,11 @@
-name: dbt_run_scheduled_temp_test1
-run-name: dbt_run_scheduled_temp_test1
+name: dbt_run_scheduled_temp_test3
+run-name: dbt_run_scheduled_temp_test3
 
 on:
   workflow_dispatch:
     branches:
       - "main"
-
+    
 concurrency:
   group: ${{ github.workflow }}
 
@@ -13,11 +13,11 @@ jobs:
   called_workflow_template:
     uses: FlipsideCrypto/fsc-evm/.github/workflows/dbt_run_template.yml@AN-5800/env-vars
     with:
-      target: dev
-      command_name: Run Main Models
+      target: test
+      command_name: Build Recent Testing Views
       command: |
         dbt run -m "$PROJECT_NAME,tag:bronze_core"
-      command_name_2: Run Streamline Models
+      command_name_2: Run Recent Tests
       command_2: |
-        dbt run -m "$PROJECT_NAME,tag:bronze_core"
+        dbt test -m "$PROJECT_NAME,tag:bronze_core"
     secrets: inherit
