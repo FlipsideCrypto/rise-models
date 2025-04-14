@@ -23,9 +23,11 @@ WITH bronze_receipts AS (
             COALESCE(MAX(_inserted_timestamp), '1900-01-01'::TIMESTAMP) AS _inserted_timestamp
         FROM {{ this }}
     ) AND DATA IS NOT NULL
+    AND LENGTH(DATA::STRING) <= 16777216 -- MAX LOB SIZE
     {% else %}
     {{ ref('bronze_testnet__receipts_fr') }}
     WHERE DATA IS NOT NULL
+    AND LENGTH(DATA::STRING) <= 16777216 -- MAX LOB SIZE
     {% endif %}
 )
 
