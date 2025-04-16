@@ -29,7 +29,7 @@ SELECT
 FROM
     {{ source(
         "bronze_streamline",
-        "testnet_transactions"
+        "testnet_transactions_v2"
     ) }}
     s
     JOIN meta b

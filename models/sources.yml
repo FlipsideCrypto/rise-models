@@ -17,6 +17,8 @@ sources:
       - name: testnet_traces
       - name: testnet_confirm_blocks
       - name: testnet_decoded_logs
+      - name: testnet_blocks_v2
+      - name: testnet_transactions_v2
   - name: crosschain_silver
     database: "{{ 'crosschain' if target.database.upper() == var('GLOBAL_PROD_DB_NAME').upper() else 'crosschain_dev' }}"
     schema: silver

@@ -5,12 +5,12 @@
     post_hook = fsc_utils.if_data_call_function_v2(
         func = 'streamline.udf_bulk_rest_api_v2',
         target = "{{this.schema}}.{{this.identifier}}",
-        params ={ "external_table" :"testnet_blocks_transactions",
+        params ={ "external_table" :"testnet_blocks",
         "sql_limit" :"14400",
         "producer_batch_size" :"3600",
         "worker_batch_size" :"1800",
         "sql_source" :"{{this.identifier}}",
-        "exploded_key": tojson(["result", "result.transactions"]) }
+        "exploded_key": tojson(["result"]) }
     ),
     tags = ['streamline_testnet_realtime']
 ) }}
@@ -26,8 +26,7 @@ to_do AS (
         AND block_number >= (SELECT block_number FROM last_3_days)
     EXCEPT
     SELECT block_number
-    FROM {{ ref("streamline__testnet_blocks_complete") }} b
-    INNER JOIN {{ ref("streamline__testnet_transactions_complete") }} t USING(block_number)
+    FROM {{ ref("streamline__testnet_blocks_complete") }}
     WHERE 1=1
         AND block_number >= (SELECT block_number FROM last_3_days)
 ),
@@ -49,7 +48,7 @@ SELECT
             'id', block_number,
             'jsonrpc', '2.0',
             'method', 'eth_getBlockByNumber',
-            'params', ARRAY_CONSTRUCT(utils.udf_int_to_hex(block_number), TRUE)
+            'params', ARRAY_CONSTRUCT(utils.udf_int_to_hex(block_number), FALSE)
         ),
         '{{ node_secret_path }}'
     ) AS request
@@ -59,4 +58,4 @@ FROM
 ORDER BY block_number desc
 
 LIMIT 
-    7200
+    14400
