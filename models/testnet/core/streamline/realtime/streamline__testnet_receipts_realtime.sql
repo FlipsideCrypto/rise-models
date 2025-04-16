@@ -7,7 +7,7 @@
         target = "{{this.schema}}.{{this.identifier}}",
         params ={ "external_table" :"testnet_receipts",
         "sql_limit" :"14400",
-        "producer_batch_size" :"3600",
+        "producer_batch_size" :"1800",
         "worker_batch_size" :"1800",
         "sql_source" :"{{this.identifier}}",
         "exploded_key": tojson(["result"]) }
