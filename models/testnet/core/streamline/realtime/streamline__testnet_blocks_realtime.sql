@@ -58,4 +58,4 @@ FROM
 ORDER BY block_number desc
 
 LIMIT 
-    14400
+    14

@@ -12,7 +12,7 @@ WITH meta AS (
         TABLE(
             information_schema.external_table_file_registration_history(
                 start_time => DATEADD('day', -3, CURRENT_TIMESTAMP()),
-                table_name => '{{ source( "bronze_streamline", "testnet_transactions") }}')
+                table_name => '{{ source( "bronze_streamline", "testnet_transactions_v2") }}')
             ) A
 )
 SELECT
