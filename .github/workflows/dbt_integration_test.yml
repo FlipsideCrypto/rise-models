@@ -32,3 +32,10 @@ jobs:
       environment: ${{ inputs.environment }}
       warehouse: ${{ needs.prepare_vars.outputs.warehouse }}  
     secrets: inherit
+
+  notify-failure:
+    needs: [called_workflow_template]
+    if: failure()
+    uses: FlipsideCrypto/fsc-evm/.github/workflows/slack_notify.yml@main
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
