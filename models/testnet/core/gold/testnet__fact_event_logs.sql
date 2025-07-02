@@ -18,6 +18,7 @@ WITH base AS (
     WHERE
         1 = 1
         AND ARRAY_SIZE(receipts_json :logs) > 0
+        AND length(receipts_json::string) <= 100000
 
 {% if is_incremental() %}
 AND modified_timestamp > (
